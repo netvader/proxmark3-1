@@ -843,7 +843,9 @@ static bool SimulateIso14443aInit(int tagType, int flags, uint8_t *data, tag_res
     // dummy ATS (pseudo-ATR), answer to RATS
     static uint8_t rRATS[] = { 0x04, 0x58, 0x80, 0x02, 0x00, 0x00 };
     // GET_VERSION response for EV1/NTAG
-    static uint8_t rVERSION[10] = { 0x00 };
+    // static uint8_t rVERSION[10] = { 0x00 };
+    // amiibo-fix
+    static uint8_t rVERSION[10] = { 0x00, 0x04, 0x04, 0x02, 0x01, 0x00, 0x11, 0x03 };
     // READ_SIG response for EV1/NTAG
     static uint8_t rSIGN[34] = { 0x00 };
 
@@ -895,7 +897,7 @@ static bool SimulateIso14443aInit(int tagType, int flags, uint8_t *data, tag_res
                 tearings[i] = mfu_header->counter_tearing[i][3];
             }
             // GET_VERSION
-            memcpy(rVERSION, mfu_header->version, 8);
+            // amiibo-fix memcpy(rVERSION, mfu_header->version, 8);
             AddCrc14A(rVERSION, sizeof(rVERSION) - 2);
             // READ_SIG
             memcpy(rSIGN, mfu_header->signature, 32);
@@ -1393,11 +1395,18 @@ void SimulateIso14443aTag(uint8_t tagType, uint8_t flags, uint8_t *data) {
             p_response = NULL;
         } else if (receivedCmd[0] == MIFARE_ULEV1_AUTH && len == 7 && tagType == 7) { // NTAG / EV-1 authentication
             // PWD stored in dump now
-            uint8_t pwd[4];
+            // amiibo-fix start
+           /* uint8_t pwd[4];
             emlGetMemBt(pwd, (pages - 1) * 4 + MFU_DUMP_PREFIX_LENGTH, sizeof(pwd));
             if (memcmp(receivedCmd + 1, pwd, 4) == 0) {
                 uint8_t cmd[4];
-                emlGetMemBt(cmd, pages * 4 + MFU_DUMP_PREFIX_LENGTH, 2);
+                emlGetMemBt(cmd, pages * 4 + MFU_DUMP_PREFIX_LENGTH, 2); */
+            if (true) {
+                uint8_t cmd[4] = {0x80, 0x80, 0x00, 0x00};
+                AddCrc14A(cmd, sizeof(cmd) - 2);
+                EmSendCmd(cmd, sizeof(cmd));
+            } else {
+                //amiibo-fix end
                 AddCrc14A(cmd, sizeof(cmd) - 2);
                 EmSendCmd(cmd, sizeof(cmd));
             } else {
